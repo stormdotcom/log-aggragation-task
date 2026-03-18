@@ -5,7 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "start:inspect": "node --inspect src/index.js",
+    "start:trace-gc": "node --trace-gc src/index.js",
+    "load:10kpm": "node scripts/loadLogs.js --ratePerMinute=10000 --durationSeconds=60 --userIdMax=50000 --minutesWindow=5 --concurrency=50 --jitterMs=5"
   },
   "keywords": [],
   "author": "",
