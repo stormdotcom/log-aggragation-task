@@ -1,77 +1,74 @@
-Node.js Machine Test (1 Hour) 
+# Log Aggregation: Unique Active Users (Sliding Window)
 
-Please read the instructions carefully before starting. 
+Store incoming user activity logs and return the **count of unique users active in the last N minutes**.
 
-You are free to use any libraries or tools. The goal is to evaluate problem solving, code quality, correctness, and engineering decisions, not just whether the API runs. 
+## Tech
+- Node.js
+- Express
+- In-memory store (bounded time window)
 
-Use Node.js with Express.js for the server. 
+## Requirements (from prompt)
+- Avoid unbounded memory growth
+- Efficient for frequent queries
+- Handle invalid inputs
 
-General Expectations 
+## Getting started
 
-We will evaluate: 
+### Prerequisites
+- Node.js (LTS recommended)
 
-Code structure & readability 
+### Install
+```bash
+npm install
+```
 
-Handling of edge cases 
+### Run
+```bash
+npm run dev
+```
+or
+```bash
+npm start
+```
 
-Correctness of logic 
+Server starts on `PORT` (default `3000`).
 
-Concurrency & data safety awareness 
+## API
 
-API design & status codes 
+Base path: `/api`
 
-How you would scale this in real production 
+### Health check
+`GET /health`
 
-You may store data in memory unless you prefer a database. 
+### Store log entry
+`POST /api/logs`
 
-Submission Instructions 
+Body:
+```json
+{ "userId": 123, "timestamp": 1710000000000 }
+```
 
-Please provide: 
+Responses:
+- `201`: `{ "message": "Log entry added" }`
+- `400`: invalid payload (missing/invalid `userId` or `timestamp`)
 
-Source code 
+### Get active users count
+`GET /api/active-users?minutes=N`
 
-Steps to run the project 
+Response:
+```json
+{ "count": 42 }
+```
 
-Any assumptions made 
+Validation:
+- `minutes` must be a positive integer
+- `minutes` is clamped to the max in-memory window (default **5 minutes**)
 
- 
+## Assumptions
+- **Server time** is the source of truth for “current time”.
+- Payload `timestamp` is **milliseconds since epoch**.
+- `userId` is a **positive integer**.
+- Logs older than the max window are pruned; this is an in-memory solution (not durable across restarts).
 
- 
-
-Log Aggregation with Time Window 
-
-Store incoming user activity logs and build an API to return the count of unique users active in the last N minutes. The solution should be efficient and avoid unbounded memory growth. 
-
-Log format 
-
-{ "userId": number, "timestamp": number } 
-
-APIs to implement 
-
-POST /logs[Text Wrapping Break]GET  /active-users?minutes=N 
-
-POST /logs 
-
-Store the incoming log entry. 
-
-GET /active-users 
-
-Return the count of unique users active within the last N minutes from the current server time. 
-
-Requirements 
-
-Avoid unbounded memory growth. 
-
-Efficient for frequent queries. 
-
-Handle invalid inputs. 
-
-Bonus discussion after implementation 
-
-Be ready to explain: 
-
-How would this system work if logs were millions per minute? 
-
- 
-
- 
+## Notes for high volume (interview)
+See `solutions.md` for **old vs new** approach and scaling discussion (millions/minute, streaming, Redis/Kafka, approximate unique counting).
