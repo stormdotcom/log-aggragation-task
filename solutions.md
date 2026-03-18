@@ -8,6 +8,26 @@ This repo implements **“count unique active users in last N minutes”**.
 - **`entries: Array<{ userId, timestamp }>`** kept in memory
 - Append new logs and periodically remove old ones
 
+### Visual data flow
+
+```text
+Incoming log
+   { userId, timestamp }
+          |
+          v
+   +------------------------+
+   | entries[] (array)      |
+   | [                     ]|
+   +------------------------+
+          |
+          |  GET /active-users?minutes=N
+          v
+   1) now - N => cutoffTime
+   2) binary search in entries[] to find first index >= cutoffTime
+   3) scan from index..end, put userId into Set
+   4) result = Set.size
+```
+
 ### Write path (`POST /logs`)
 - Append a log to `entries`
 - Prune old logs outside the max window
@@ -53,6 +73,33 @@ This repo implements **“count unique active users in last N minutes”**.
 ### Read path (`GET /active-users?minutes=N`)
 - Prune based on requested N (clamped to max window)
 - Return **`{ count: latestTimestampByUserId.size }`**
+
+### Visual data flow
+
+```text
+Incoming log
+   { userId, timestamp }
+          |
+          v
+   +-------------------------------+
+   | latestTimestampByUserId (Map) |
+   |  userId -> latestTimestamp    |
+   +-------------------------------+
+          ^
+          |
+          +-------------------+
+                              |
+   +---------------------+    |
+   |     minHeap         |----+
+   | [ (ts, userId), ... ]    |
+   +---------------------+
+          |
+          |  prune step (on write or read)
+          v
+   1) while heap.top.timestamp < cutoffTime:
+   2)   pop top (ts, userId)
+   3)   if Map[userId] === ts -> delete userId from Map
+```
 
 ### Complexity & high-volume behavior
 - **Write**: \(O(\log u)\) for heap push + amortized pruning, where \(u\) is active unique users
